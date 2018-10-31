@@ -23,6 +23,7 @@ router.get('/:id', getById);
 router.put('/:id', update);
 router.delete('/:id', _delete);
 router.post('/resetRequest', forgotPass);
+router.put('/resetPassword=?:token', reset);
 
 module.exports = router;
 
@@ -70,18 +71,18 @@ function _delete(req, res, next) {
 
 function forgotPass(req, res,next){
   async.waterfall([
-    function genToken(done) {
+    function(done) {
       crypto.randomBytes(20, function(err, buf) {
         var token = buf.toString('hex');
         done(err, token);
       });
     },
-    function setToken(token, done) {
+    function(token, done) {
       User.findOne({ email: req.body.email}, function(err, user) {
-        if (!user) {
-          return res.json({message: 'No account with that email address exists.'}).redirect('/resetRequest');
-        }
-
+        if (err) 
+          return res.status(404).json({message: 'No account with that email address exists.'})
+          .catch(err => next(err));
+        
         user.reset_password_Token = token;
         user.reset_password_Expires = Date.now() + 3600000; // 1 hour
 
@@ -90,24 +91,58 @@ function forgotPass(req, res,next){
         });
       });
     },
-    function sendMail(token, user, done) {
+    function(token, user, done) {
       var mailOptions = {
         to: user.email,
         from: '5star.cosc412@gmail.com',
         subject: 'Password Reset',
         text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
           'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
-          'http://' + req.headers.host + '/reset/' + token + '\n\n' +
+          'http://' + req.headers.host + 'users/reset/' + token + '\n\n' +
           'If you did not request this, please ignore this email and your password will remain unchanged.\n'
       };
       smtpTransport.sendMail(mailOptions, function(err) {
-        if(!error) return res.json({message: 'An email has bas been sent to '+user.email+'!'})
+        if (!err) res.json({message: 'An email has bas been sent to '+user.email+'!'});
         done(err, 'done');
-
       });
     }
   ], function(err) {
     if (err) return next(err);
     res.redirect('/resetRequest');
+  });
+}
+
+function reset (req, res){
+  async.waterfall([
+    function(done) {
+      User.findOne({ reset_password_token: req.params.token, reset_password_expires: { $gt: Date.now() } }, function(err, user) {
+        if (!user) {
+          req.flash('error', 'Password reset token is invalid or has expired.');
+          return res.redirect('back');
+        }
+
+        user.hash = bcrypt.hashSync(req.body, 10);
+        user.reset_password_token = undefined;
+        user.reset_password_expires = undefined;
+
+        user.save(function(err) {
+            done(err, user);
+        });
+      });
+    },
+    function(user, done) {
+      var mailOptions = {
+        to: user.email,
+        from: '5star.cosc412@gmail.com',
+        subject: 'Your password has been changed',
+        text: 'Hello,\n\n' +
+          'This is a confirmation that the password for your account ' + user.email + ' has just been changed.\n'
+      };
+      smtpTransport.sendMail(mailOptions, function(err) {
+        done(err);
+      });
+    }
+  ], function(err) {
+    res.redirect('/');
   });
 }
