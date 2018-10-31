@@ -68,19 +68,18 @@ function _delete(req, res, next) {
         .catch(err => next(err));
 }
 
-function forgotPass(req, res){
+function forgotPass(req, res,next){
   async.waterfall([
-    function(done) {
+    function genToken(done) {
       crypto.randomBytes(20, function(err, buf) {
         var token = buf.toString('hex');
         done(err, token);
       });
     },
-    function(token, done) {
-      User.findOne({ email: req.body.email }, function(err, user) {
+    function setToken(token, done) {
+      User.findOne({ email: req.body.email}, function(err, user) {
         if (!user) {
-          req.flash('error', 'No account with that email address exists.');
-          return res.redirect('/resetRequest');
+          return res.json({message: 'No account with that email address exists.'}).redirect('/resetRequest');
         }
 
         user.reset_password_Token = token;
@@ -91,7 +90,7 @@ function forgotPass(req, res){
         });
       });
     },
-    function(token, user, done) {
+    function sendMail(token, user, done) {
       var mailOptions = {
         to: user.email,
         from: '5star.cosc412@gmail.com',
@@ -102,8 +101,9 @@ function forgotPass(req, res){
           'If you did not request this, please ignore this email and your password will remain unchanged.\n'
       };
       smtpTransport.sendMail(mailOptions, function(err) {
-        req.flash('info', 'An e-mail has been sent to ' + user.email + ' with further instructions.');
+        if(!error) return res.json({message: 'An email has bas been sent to '+user.email+'!'})
         done(err, 'done');
+
       });
     }
   ], function(err) {
