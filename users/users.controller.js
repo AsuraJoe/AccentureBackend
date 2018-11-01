@@ -4,6 +4,7 @@ const userService = require('./user.service');
 const nodemailer = require('nodemailer');
 var async = require('async');
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const db = require('_helpers/db');
 var User = db.User;
 const smtpTransport = nodemailer.createTransport({
@@ -23,7 +24,7 @@ router.get('/:id', getById);
 router.put('/:id', update);
 router.delete('/:id', _delete);
 router.post('/resetRequest', forgotPass);
-router.put('/resetPassword/:token', reset);
+router.post('/resetPassword', reset);
 
 module.exports = router;
 
@@ -98,7 +99,7 @@ function forgotPass(req, res,next){
         subject: 'Password Reset',
         text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
           'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
-          'http://' + req.headers.host + '/users/resetPassword/' + token + '\n\n' +
+          'http://localhost:8080/' + 'reset_password?token=' + token + '\n\n' +
           'If you did not request this, please ignore this email and your password will remain unchanged.\n'
       };
       smtpTransport.sendMail(mailOptions, function(err) {
@@ -115,15 +116,16 @@ function forgotPass(req, res,next){
 function reset (req, res){
   async.waterfall([
     function(done) {
-      User.findOne({ reset_password_token: req.params.token, reset_password_expires: { $gt: Date.now() } }, function(err, user) {
+      console.log(req);
+      User.findOne({ reset_password_token: req.query.token, reset_password_expires: { $gt: Date.now() } }, function(err, user) {
         if (!user) {
-          req.flash('error', 'Password reset token is invalid or has expired.');
           return res.redirect('back');
         }
 
         user.hash = bcrypt.hashSync(req.body.password, 10);
         user.reset_password_token = undefined;
         user.reset_password_expires = undefined;
+        console.log(user);
 
         user.save(function(err) {
             done(err, user);
@@ -139,6 +141,7 @@ function reset (req, res){
           'This is a confirmation that the password for your account ' + user.email + ' has just been changed.\n'
       };
       smtpTransport.sendMail(mailOptions, function(err) {
+        if (!err) res.json({message: 'Your password has been reset succssfully'});
         done(err);
       });
     }
