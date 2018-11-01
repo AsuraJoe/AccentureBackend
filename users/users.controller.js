@@ -23,7 +23,7 @@ router.get('/:id', getById);
 router.put('/:id', update);
 router.delete('/:id', _delete);
 router.post('/resetRequest', forgotPass);
-router.put('/resetPassword=?/:token', reset);
+router.put('/resetPassword/:token', reset);
 
 module.exports = router;
 
@@ -83,8 +83,8 @@ function forgotPass(req, res,next){
           return res.status(404).json({message: 'No account with that email address exists.'})
           .catch(err => next(err));
         
-        user.reset_password_Token = token;
-        user.reset_password_Expires = Date.now() + 3600000; // 1 hour
+        user.reset_password_token = token;
+        user.reset_password_expires = Date.now() + 3600000; // 1 hour
 
         user.save(function(err) {
           done(err, token, user);
@@ -98,7 +98,7 @@ function forgotPass(req, res,next){
         subject: 'Password Reset',
         text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
           'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
-          'http://' + req.headers.host + '/users/resetPassword=?/' + token + '\n\n' +
+          'http://' + req.headers.host + '/users/resetPassword/' + token + '\n\n' +
           'If you did not request this, please ignore this email and your password will remain unchanged.\n'
       };
       smtpTransport.sendMail(mailOptions, function(err) {

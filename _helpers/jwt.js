@@ -12,7 +12,7 @@ function jwt() {
             '/users/authenticate',
             '/users/register',
             '/users/resetRequest',
-            '/users/resetPassword=?/:token'
+            '/users/resetPassword/:token'
         ]
     });
 }
