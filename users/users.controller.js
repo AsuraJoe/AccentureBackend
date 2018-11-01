@@ -23,7 +23,7 @@ router.get('/:id', getById);
 router.put('/:id', update);
 router.delete('/:id', _delete);
 router.post('/resetRequest', forgotPass);
-router.put('/resetPassword=?:token', reset);
+router.put('/resetPassword=?/:token', reset);
 
 module.exports = router;
 
@@ -98,7 +98,7 @@ function forgotPass(req, res,next){
         subject: 'Password Reset',
         text: 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
           'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
-          'http://' + req.headers.host + 'users/reset/' + token + '\n\n' +
+          'http://' + req.headers.host + '/users/resetPassword=?/' + token + '\n\n' +
           'If you did not request this, please ignore this email and your password will remain unchanged.\n'
       };
       smtpTransport.sendMail(mailOptions, function(err) {
@@ -121,7 +121,7 @@ function reset (req, res){
           return res.redirect('back');
         }
 
-        user.hash = bcrypt.hashSync(req.body, 10);
+        user.hash = bcrypt.hashSync(req.body.password, 10);
         user.reset_password_token = undefined;
         user.reset_password_expires = undefined;
 
