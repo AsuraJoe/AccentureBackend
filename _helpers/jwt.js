@@ -12,7 +12,8 @@ function jwt() {
             '/users/authenticate',
             '/users/register',
             '/users/resetRequest',
-            '/users/resetPassword'
+            '/users/resetPassword',
+            '/forms/submit',
         ]
     });
 }
