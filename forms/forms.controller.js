@@ -1,8 +1,6 @@
 const express = require ('express');
 const router = express.Router();
 const formService = require('./form.service');
-const db = require('../_helpers/db');
-var form = db.Form;
 
 //routes
 router.get('/', getAll);
@@ -20,7 +18,7 @@ function getAll(req, res, next){
 
 function create(req, res, next){
     formService.create(req.body)
-        .then(form => form ? res.json(form) : res.sendStatus(404))
+        .then(() => res.json({}))
         .catch(err => next(err));
 };
 

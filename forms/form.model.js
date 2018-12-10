@@ -1,18 +1,19 @@
-const mongoose= require('mongoose');
-const FormSchema=mongoose.Schema;
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-var formSchema = new FormSchema({
-    user_id: {type: String, required:true},
-    Name: {type: String, required: true},
-    SSN: {type: String, required: true},
-    Gender: {type: String, required: true},
-    DoB: {type: String, required: true},
-    PoB: {type: String, required: true},
-    PublicRecord: {type: String, required: true},
-    ReligiousRecord: {type: String, required: true},
-    Citizenship: {type: Boolean, required: true},
+var schema = new Schema({
+    user_id: { type: String, required: true },
+    name: { type: String, required: true },
+    ssn: { type: String, required: true },
+    gender: { type: String, required: true },
+    dob: { type: String, required: true },
+    pob: { type: String, required: true },
+    publicRecord: { type: String, required: true },
+    religiousRecord: { type: String, required: true },
+    citizenship: { type: Boolean, required: true },
+    createdDate: { type: Date, default: Date.now }
 });
 
-formSchema.set('toJson', {virtuals: true});
+schema.set('toJSON', { virtuals: true });
 
-module.exports= mongoose.model('Form',formSchema);
+module.exports = mongoose.model('Form', schema);
