@@ -22,5 +22,6 @@ async function getByID (id){
 };
 
 async function getByUserID (user_id) {
+    console.log(user_id);
     return await Form.find({ user_id: user_id }).select('-hash');
 }

@@ -23,7 +23,7 @@ function create(req, res, next){
 };
 
 function getByUserID(req, res, next){
-    formService.getByUserID(req.params.user_id)
+    formService.getByUserID(req.params.id)
         .then(forms => res.json(forms))
         .catch(err => next(err));
 }
